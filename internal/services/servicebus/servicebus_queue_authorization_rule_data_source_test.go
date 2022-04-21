@@ -10,13 +10,34 @@ import (
 
 type ServiceBusQueueAuthorizationRuleDataSource struct{}
 
-func TestAccDataSourceServiceBusQueueAuthorizationRule_basic(t *testing.T) {
+func TestAccDataSourceServiceBusQueueAuthorizationRule_byId(t *testing.T) {
 	data := acceptance.BuildTestData(t, "data.azurerm_servicebus_queue_authorization_rule", "test")
 	r := ServiceBusQueueAuthorizationRuleDataSource{}
 
 	data.DataSourceTest(t, []acceptance.TestStep{
 		{
-			Config: r.basic(data),
+			Config: r.byId(data),
+			Check: acceptance.ComposeTestCheckFunc(
+				check.That(data.ResourceName).Key("id").Exists(),
+				check.That(data.ResourceName).Key("name").Exists(),
+				check.That(data.ResourceName).Key("queue_id").Exists(),
+				check.That(data.ResourceName).Key("primary_key").Exists(),
+				check.That(data.ResourceName).Key("secondary_key").Exists(),
+				check.That(data.ResourceName).Key("primary_connection_string").Exists(),
+				check.That(data.ResourceName).Key("secondary_connection_string").Exists(),
+				check.That(data.ResourceName).Key("primary_connection_string_alias").HasValue(""),
+				check.That(data.ResourceName).Key("secondary_connection_string_alias").HasValue(""),
+			),
+		},
+	})
+}
+func TestAccDataSourceServiceBusQueueAuthorizationRule_byName(t *testing.T) {
+	data := acceptance.BuildTestData(t, "data.azurerm_servicebus_queue_authorization_rule", "test")
+	r := ServiceBusQueueAuthorizationRuleDataSource{}
+
+	data.DataSourceTest(t, []acceptance.TestStep{
+		{
+			Config: r.byName(data),
 			Check: acceptance.ComposeTestCheckFunc(
 				check.That(data.ResourceName).Key("id").Exists(),
 				check.That(data.ResourceName).Key("name").Exists(),
@@ -50,13 +71,26 @@ func TestAccDataSourceServiceBusQueueAuthorizationRule_withAliasConnectionString
 	})
 }
 
-func (ServiceBusQueueAuthorizationRuleDataSource) basic(data acceptance.TestData) string {
+func (ServiceBusQueueAuthorizationRuleDataSource) byId(data acceptance.TestData) string {
 	return fmt.Sprintf(`
 %s
 
 data "azurerm_servicebus_queue_authorization_rule" "test" {
   name     = azurerm_servicebus_queue_authorization_rule.test.name
   queue_id = azurerm_servicebus_queue.test.id
+}
+`, ServiceBusQueueAuthorizationRuleResource{}.base(data, true, true, true))
+}
+
+func (ServiceBusQueueAuthorizationRuleDataSource) byName(data acceptance.TestData) string {
+	return fmt.Sprintf(`
+%s
+
+data "azurerm_servicebus_queue_authorization_rule" "test" {
+  name                = azurerm_servicebus_queue_authorization_rule.test.name
+  resource_group_name = azurerm_servicebus_queue.test.resource_group_name
+  namespace_name      = azurerm_servicebus_queue.test.namespace_name
+  queue_name          = azurerm_servicebus_queue.test.queue_name
 }
 `, ServiceBusQueueAuthorizationRuleResource{}.base(data, true, true, true))
 }
